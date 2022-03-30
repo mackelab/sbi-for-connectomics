@@ -1,0 +1,24 @@
+compute_metrics: true
+device: ${algorithm.device}
+seed: null
+algorithm:
+  name: SNPE
+  run: sbi.snpe.run
+  device: cpu
+  params:
+    num_rounds: 10
+    neural_net: mdn
+    hidden_features: 50
+    simulation_batch_size: 1000
+    training_batch_size: 1000
+    num_atoms: 5
+    automatic_transforms_enabled: false
+    z_score_x: false
+    z_score_theta: true
+    stop_after_epochs: 100
+task:
+  name: poisson_glm
+  num_simulations: 1000000
+  num_observation: 5
+joblib:
+  n_jobs: 20
