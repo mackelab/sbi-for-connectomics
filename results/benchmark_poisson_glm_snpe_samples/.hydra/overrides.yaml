@@ -1,0 +1,5 @@
+- task=poisson_glm
+- task.num_observation=5
+- task.num_simulations=1000000
+- algorithm=snpe
+- +joblib.n_jobs=20
