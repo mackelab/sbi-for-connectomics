@@ -8,7 +8,7 @@ from torch import Tensor
 from typing import Callable, Tuple, Union
 
 
-class PetersRuleSimulator:
+class DistanceRuleSimulator:
     """Simulate Peters' rule with the dense structural model.
 
     We define new features, e.g., number of common cubes for each neuron pairs, to
@@ -220,7 +220,6 @@ class PetersRuleSimulator:
         return cij
 
 
-## Stripped down version to work with subcellular variant of Peters' rule.
 class RuleSimulator:
     """Applies a rule to a dense structural model to simulate synapse formation.
 
@@ -255,15 +254,17 @@ class RuleSimulator:
                 population connection probability across pairs. Default = -1, no
                 subsampling.
         """
+
         literature_population_ids = [
-            "897f7fba-714c-4e2e-9f9c-552e3815fb34",
-            "8bbcab58-cd1e-48ac-b7ef-583e8a077a9f",
-            "7d6ff52f-0810-4ff8-8bad-e41173c5d2ff",
-            "1c32cfac-828a-46ce-acaa-8de786e6c22f",
-            "1d0687e0-bb9e-4cb1-9ed5-fcc00cd29c4d",
-            "fe21fc12-9bda-45c9-857a-385b418a1116",
-            "2eab5e02-e8da-485e-8989-41554deae0c1",
-        ]
+             "897f7fba-714c-4e2e-9f9c-552e3815fb34",
+             "8bbcab58-cd1e-48ac-b7ef-583e8a077a9f",
+             "7d6ff52f-0810-4ff8-8bad-e41173c5d2ff",
+             "1c32cfac-828a-46ce-acaa-8de786e6c22f",
+             "1d0687e0-bb9e-4cb1-9ed5-fcc00cd29c4d",
+             "fe21fc12-9bda-45c9-857a-385b418a1116",
+             "2eab5e02-e8da-485e-8989-41554deae0c1",
+         ]
+
         self.path_to_model = path_to_model
         self.verbose = verbose
         self.rule = rule
@@ -286,10 +287,9 @@ class RuleSimulator:
             os.path.join(path_to_model, "empirical_data_2020-07-13.json"),
             extend_sort=True,
         )
-
         self.publications = [
-            p for p in publications if p["ID"] in literature_population_ids
-        ]
+             p for p in publications if p["ID"] in literature_population_ids
+         ]
         self.population_masks = []
         for publication in self.publications:
             maskFile = os.path.join(
@@ -299,23 +299,24 @@ class RuleSimulator:
             )
             mask = np.loadtxt(maskFile, dtype="uint32")
             self.population_masks.append(mask)
-
+    
         constraints = getConstraints(
             self.publications, self.feature_set, os.path.join(path_to_model, "masks")
         )
 
         # Load required features from model data files.
         features_int, features_float = self.load_features()
+
         features_float = features_float.reshape(1, -1)
 
         self.features_int = features_int
         self.features_float = features_float
         self.features_float_log = self.get_log_features(features_float)
+
         self.global_norm = self.features_float[:, 2].mean()
         self.log_global_norm = np.log(self.global_norm)
         self.constraints = constraints
         self.n_constraints = len(constraints["masks"])
-
         # Pre locate features and ids per constraint.
         (
             self.features_int_per_constraint,
@@ -325,7 +326,85 @@ class RuleSimulator:
             self.post_matrix_idx_per_constraint,
         ) = self.prelocate_per_constraint()
 
+        # Prelocate indices for calculating postall from post.
+        self.prelocate_post_sum_idxs()
+
+        if not "peters" in experiment_name:
+            self.postall_offset = self.get_postall_offset()
+
+            self.prelocate_property_masks()
+            self.assert_property_masks_for_rules()
         self.return_synapse_counts = return_synapse_counts
+
+    def get_postall_offset(self) -> ndarray:
+
+        postall_hat = self.sum_post_across_voxels(self.features_float[:, 1])
+
+        # The difference gives the offset.
+        return self.features_float[:, 2] - postall_hat
+
+    def prelocate_post_sum_idxs(self) -> None:
+        """Set indices for summing over post features to get postall."""
+
+        postids = self.features_int[:, 2]
+        voxelids = self.features_int[:, 3]
+
+        # Find relevant voxelids by taking only unique postid-voxelid pairs
+        _, idx1, inv1 = np.unique(
+            np.hstack((postids.reshape(-1, 1), voxelids.reshape(-1, 1))),
+            axis=0,
+            return_index=True,
+            return_inverse=True,
+        )
+        relevant_ids = voxelids[idx1]
+
+        # Find unique voxel ids among the relevant ones
+        uvids, inv2 = np.unique(relevant_ids, return_inverse=True)
+
+        # For each unique voxel id collect indices where to find those ids
+        vidxs = []
+        for vid in uvids:
+            vidxs.append(np.where(relevant_ids == vid)[0])
+
+        # the indices to get the unique representation of post.
+        # the summing indices
+        # and the indices for the inverse unique operations
+        self.unique_post_postall_idxs = idx1
+        self.post_sum_idxs = vidxs
+        self.iunique_to_post_postall = inv2
+        self.iunique_to_all = inv1
+        self.empty_postall_idxs = np.where(voxelids == -1)[0]
+
+    def sum_post_across_voxels(self, post: ndarray) -> ndarray:
+        """Given a post feature vector, return the postall feature vector.
+
+        Postall is obtained from post by summing only the relevant entries,
+        e.g., leaving out duplicates due to multiple post neurons per voxel
+        and due to multiple pre neurons per post neuron.
+
+        The relevant indices are prelocated as masks in self.
+        """
+        relevant_post = post[self.unique_post_postall_idxs]
+
+        sums = []
+        for idx in self.post_sum_idxs:
+            sums.append(relevant_post[idx].sum())
+        sums = np.array(sums)
+
+        # Return one sum for each voxelid
+        # Apply inverse unique operations twice,
+        # first for going from unique voxels to unique postid-voxel
+        # second for going from there to all rows, including duplicate due to multiple pre neurons per post neuron.
+        return sums[self.iunique_to_post_postall][self.iunique_to_all]
+
+    def postall_from_post(self, post: ndarray) -> ndarray:
+        """Return postall calculated from post and offset."""
+        post_sum = self.sum_post_across_voxels(post)
+        postall = np.round(post_sum + self.postall_offset, decimals=1)
+        # Set -1 indices to value as in actual postall
+        postall[self.empty_postall_idxs] = 1e-10
+
+        return postall
 
     def prelocate_property_masks(self):
         """Return masks for specific properties (e.g., cell type) as needed by some rules."""
@@ -443,11 +522,12 @@ class RuleSimulator:
             post_ids_per_constraint.append(post_ids)
 
             noOverlap = np.count_nonzero(features_int[:, 3] == -1)
-            print(
-                "constraint {}, num rows (with overlap) {}".format(
-                    i, features_int.shape[0] - noOverlap
+            if self.verbose:
+                print(
+                    "constraint {}, num rows (with overlap) {}".format(
+                        i, features_int.shape[0] - noOverlap
+                    )
                 )
-            )
 
         return (
             features_int_per_constraint,
@@ -527,12 +607,13 @@ class RuleSimulator:
 
     def process_theta(self, theta: Union[ndarray, Tensor]) -> ndarray:
 
+        if theta.ndim > 1:
+            assert theta.shape[0] == 1, "rule simulator simulates single parameters only."
+
         if isinstance(theta, Tensor):
             theta_numpy = theta.numpy()
         else:
             theta_numpy = theta
-
-        theta_numpy = theta_numpy.squeeze()
 
         return theta_numpy
 
@@ -567,7 +648,8 @@ class RuleSimulator:
         features[features == 0] = 1e-10
 
         # -1 coding for missing cube will become NaN.
-        log_features = np.log(features)
+        log_features = np.ones_like(features) * float("nan")
+        log_features[:, :-1] = np.log(features[:, :-1])
 
         # The actual features must be finite.
         assert np.isfinite(log_features[:, :3]).all(), "log features must be finite."
@@ -643,8 +725,364 @@ class RuleSimulator:
         return torch.as_tensor(self.constraints["observables"], dtype=torch.float32)
 
 
-def peters_rule_subcellular(model: RuleSimulator, theta: ndarray):
+def draw_synapses_from_poisson(model: RuleSimulator, rate: ndarray):
+    """Return synapse counts from poisson given Poisson rate."""
 
+    synapses = np.random.poisson(lam=rate)
+    # Set counts of pairs without overlap (-1) to zero.
+    synapses[np.where(model.empty_postall_idxs)] = 0
+
+    return synapses
+
+
+def global_norm_rule(model: RuleSimulator, theta: ndarray):
+    """Rule scaling just pre and post with global instead of voxel specific
+    normalization."""
+
+    log_dso = (
+        theta * (model.features_float_log[:, 0] + model.features_float_log[:, 1])
+        - model.log_global_norm
+    )
+
+    # Clip rate from above and below.
+    clipped_dso = np.clip(log_dso, -model.max_rate, model.max_rate)
+    return draw_synapses_from_poisson(model, rate=np.exp(clipped_dso))
+
+
+def one_param_rule(model: RuleSimulator, theta: ndarray):
+    """Scale the entire DSO."""
+
+    log_dso = theta * (
+        model.features_float_log[:, 0]
+        + model.features_float_log[:, 1]
+        - model.features_float_log[:, 2]
+    )
+    # Clip rate from above and below.
+    clipped_dso = np.clip(log_dso, -model.max_rate, model.max_rate)
+    return draw_synapses_from_poisson(model, rate=np.exp(clipped_dso))
+
+
+def two_param_rule(model: RuleSimulator, theta: ndarray):
+    """Scale pre*post and postall seperately."""
+
+    assert theta.shape == (2,), "This is a two-parameter rule."
+
+    log_dso = (
+        theta[0] * (model.features_float_log[:, 0] + model.features_float_log[:, 1])
+        - theta[1] * model.features_float_log[:, 2]
+    )
+    # Clip rate from above and below.
+    clipped_dso = np.clip(log_dso, -model.max_rate, model.max_rate)
+    return draw_synapses_from_poisson(model, rate=np.exp(clipped_dso))
+
+
+def default_rule(
+    model: RuleSimulator,
+    theta: ndarray,
+) -> ndarray:
+    """Apply dense structural overlap rule and return synapse counts."""
+
+    assert theta.shape == (3,), "The default DSO needs theta with shape (3,)."
+
+    log_dso = (
+        theta[0] * model.features_float_log[:, 0]
+        + theta[1] * model.features_float_log[:, 1]
+        - theta[2] * model.features_float_log[:, 2]
+    )
+    # Clip rate from above and below.
+    clipped_dso = np.clip(log_dso, -model.max_rate, model.max_rate)
+    return draw_synapses_from_poisson(model, rate=np.exp(clipped_dso))
+
+
+def default_rule_linear(
+    model: RuleSimulator,
+    theta: ndarray,
+) -> ndarray:
+    """Apply constrained dense structural overlap rule and return synapse counts.
+
+    The added constraint adds the **scaled** post_j target count to the denominator,
+    ensuring that the denominator is never small than scaled post_j.
+    """
+
+    assert theta.shape == (3,), "The default DSO needs theta with shape (3,)."
+
+    # Set param for fourth column containing cortical depth to zero.
+
+    pre = theta[0] * model.features_float[:, 0]
+    post = theta[1] * model.features_float[:, 1]
+    postall = theta[2] * model.features_float[:, 2]
+    dso = pre * post / postall
+
+    return draw_synapses_from_poisson(model, rate=dso)
+
+
+def default_rule_linear_constrained(
+    model: RuleSimulator,
+    theta: ndarray,
+) -> ndarray:
+    """Apply constrained dense structural overlap rule and return synapse counts.
+
+    The added constraint adds the **scaled** post_j target count to the denominator,
+    ensuring that the denominator is never small than scaled post_j.
+    """
+
+    assert theta.shape == (3,), "The default DSO needs theta with shape (3,)."
+
+    # Set param for fourth column containing cortical depth to zero.
+
+    pre = theta[0] * model.features_float[:, 0]
+    post = theta[1] * model.features_float[:, 1]
+    postall = theta[2] * model.postall_from_post(post)
+    dso = pre * post / postall
+
+    return draw_synapses_from_poisson(model, rate=dso)
+
+
+def default_rule_constrained(
+    model: RuleSimulator,
+    theta: ndarray,
+) -> ndarray:
+    """Apply constrained dense structural overlap rule and return synapse counts.
+
+    The added constraint adds the **scaled** post_j target count to the denominator,
+    ensuring that the denominator is never small than scaled post_j.
+    """
+
+    assert theta.shape == (3,), "The default DSO needs theta with shape (3,)."
+
+    log_pre = theta[0] * model.features_float_log[:, 0]
+    log_post = theta[1] * model.features_float_log[:, 1]
+    # To calculate postall from post we need to go to linear space.
+    log_postall = theta[2] * np.log(model.postall_from_post(np.exp(log_post)))
+    log_dso = log_pre + log_post - log_postall
+
+    # Clip rate from above and below.
+    clipped_dso = np.clip(log_dso, -model.max_rate, model.max_rate)
+    return draw_synapses_from_poisson(model, rate=np.exp(clipped_dso))
+
+
+def default_rule_pre_calculated_linear(
+    model: RuleSimulator, pre: ndarray, theta: ndarray
+):
+    """Apply default rule for post and postall, given log_pre already calculated."""
+
+    assert theta.shape == (2,), "Theta needs to only two entries: post and postall."
+
+    # Set param for fourth column containing cortical depth to zero.
+
+    post = theta[0] * model.features_float[:, 1]
+    postall = theta[1] * model.postall_from_post(post)
+    dso = pre * post / postall
+
+    return draw_synapses_from_poisson(model, rate=dso)
+
+
+def default_rule_pre_calculated(model: RuleSimulator, log_pre: ndarray, theta: ndarray):
+    """Apply default rule for post and postall, given log_pre already calculated."""
+
+    assert theta.shape == (2,), "Theta needs to only two entries: post and postall."
+
+    # Weighted dso with single weights for post and postall.
+    log_post = theta[0] * model.features_float_log[:, 1]
+    log_postall = theta[1] * np.log(model.postall_from_post(np.exp(log_post)))
+    log_dso = log_pre + log_post - log_postall
+
+    # Clip rate from above and below.
+    clipped_dso = np.clip(log_dso, -model.max_rate, model.max_rate)
+    return draw_synapses_from_poisson(model, rate=np.exp(clipped_dso))
+
+
+def rule_Layer4(
+    model: RuleSimulator,
+    theta: ndarray,
+) -> ndarray:
+    """Variante of the default rule, using separate weights for L4 boutons vs rest."""
+
+    assert theta.shape == (
+        4,
+    ), "Rule needs theta with shape (4,): pre-Layer4, pre-not-Layer4, pst, pstAll"
+
+    # Prelocate and apply separate weights on boutons.
+    log_pre = np.zeros(model.features_float.shape[0], dtype=float)
+    log_pre[model.is_l4] = theta[0] * model.features_float_log[model.is_l4, 0]
+    log_pre[model.not_l4] = theta[1] * model.features_float_log[model.not_l4, 0]
+
+    return default_rule_pre_calculated(model, log_pre, theta[2:])
+
+
+def rule_L4ss(
+    model: RuleSimulator,
+    theta: ndarray,
+) -> ndarray:
+    """Apply separate bouton weight, if postsynaptic cell type is L4ss."""
+
+    assert theta.shape == (
+        4,
+    ), "Rule needs theta with shape (4,): pre-Layer4, pre-not-Layer4, pst, pstAll"
+
+    # Prelocate and apply separate weights on boutons.
+    log_pre = np.zeros(model.features_float.shape[0], dtype=float)
+    log_pre[model.is_l4ss] = theta[0] * model.features_float_log[model.is_l4ss, 0]
+    log_pre[model.not_l4ss] = theta[1] * model.features_float_log[model.not_l4ss, 0]
+
+    return default_rule_pre_calculated(model, log_pre, theta[2:])
+
+
+def rule_l4_l4ss_rest(model: RuleSimulator, theta: ndarray):
+    """
+    Apply rule with separate boutons weights for L4ss, L4rest, and not L4.
+    """
+
+    assert theta.shape == (
+        5,
+    ), """Rule needs theta with shape (5,): pre-Layer4ss, pre-layer4rest, 
+    pre-not-layer4, pst, pstAll"""
+
+    # Prelocate and apply separate weights on boutons.
+    log_pre = np.zeros(model.features_float.shape[0], dtype=float)
+    log_pre[model.is_l4l4ss] = theta[0] * model.features_float_log[model.is_l4l4ss, 0]
+    log_pre[model.is_l4rest] = theta[1] * model.features_float_log[model.is_l4rest, 0]
+    # apply third weight to all remaining indices (not L4).
+    log_pre[model.not_l4] = theta[2] * model.features_float_log[model.not_l4, 0]
+
+    return default_rule_pre_calculated(model, log_pre, theta[3:])
+
+
+def rule_L4ss_linear(
+    model: RuleSimulator,
+    theta: ndarray,
+) -> ndarray:
+    """Apply separate bouton weight, if postsynaptic cell type is L4ss."""
+
+    assert theta.shape == (
+        4,
+    ), "Rule needs theta with shape (4,): pre-Layer4, pre-not-Layer4, pst, pstAll"
+
+    # Prelocate and apply separate weights on boutons.
+    pre = np.zeros(model.features_float.shape[0], dtype=float)
+    pre[model.is_l4ss] = theta[0] * model.features_float[model.is_l4ss, 0]
+    pre[model.not_l4ss] = theta[1] * model.features_float[model.not_l4ss, 0]
+
+    return default_rule_pre_calculated_linear(model, pre=pre, theta=theta[2:])
+
+
+def rule_L4ss_L4sp_L5it_l5pt_linear(
+    model: RuleSimulator,
+    theta: ndarray,
+) -> ndarray:
+    """Apply separate bouton weights for specific postsynaptic cell types L4ss."""
+
+    assert theta.shape == (
+        7,
+    ), "Rule needs theta with shape (7,): l4sp, l4ss, l5it, l5pt, rest, pst, pstAll"
+
+    # Prelocate and apply separate weights on boutons.
+    pre = np.zeros(model.features_float.shape[0], dtype=float)
+    pre[model.is_l4sp] = theta[0] * model.features_float[model.is_l4sp, 0]
+    pre[model.is_l4ss] = theta[1] * model.features_float[model.is_l4ss, 0]
+    pre[model.is_l5it] = theta[2] * model.features_float[model.is_l5it, 0]
+    pre[model.is_l5pt] = theta[3] * model.features_float[model.is_l5pt, 0]
+    pre[model.not_4lss_l4sp_l5it_l5pt] = (
+        theta[4] * model.features_float[model.not_4lss_l4sp_l5it_l5pt, 0]
+    )
+
+    return default_rule_pre_calculated_linear(model, pre=pre, theta=theta[5:])
+
+
+def rule_L4ss_L4sp_L5it_l5pt_infra_linear(
+    model: RuleSimulator,
+    theta: ndarray,
+) -> ndarray:
+    """Apply separate bouton weights for specific postsynaptic cell types and infragranular layer."""
+
+    assert theta.shape == (
+        8,
+    ), "Rule needs theta with shape (8,): l4sp, l4ss, l5it, l5pt, rest_not_infra, rest_infra, pst, pstAll"
+
+    # Prelocate and apply separate weights on boutons.
+    pre = np.zeros(model.features_float.shape[0], dtype=float)
+    pre[model.is_l4sp] = theta[0] * model.features_float[model.is_l4sp, 0]
+    pre[model.is_l4ss] = theta[1] * model.features_float[model.is_l4ss, 0]
+    pre[model.is_l5it] = theta[2] * model.features_float[model.is_l5it, 0]
+    pre[model.is_l5pt] = theta[3] * model.features_float[model.is_l5pt, 0]
+    pre[model.not_l4ss_l4sp_l5it_l5pt_not_infra] = (
+        theta[4] * model.features_float[model.not_l4ss_l4sp_l5it_l5pt_not_infra, 0]
+    )
+    pre[model.not_l4ss_l4sp_l5it_l5pt_infra] = (
+        theta[5] * model.features_float[model.not_l4ss_l4sp_l5it_l5pt_infra, 0]
+    )
+
+    return default_rule_pre_calculated_linear(model, pre=pre, theta=theta[6:])
+
+
+def bernoulli_glm(model: RuleSimulator, theta: ndarray) -> ndarray:
+    """Return Bernoulli GLM samples of present connections ijk.
+
+    Predict the Bernoulli connection probability of neurons i and j
+    in voxel k from dense structural overlap.
+
+    Parameters theta act in log space to fulfil GLM requirements.
+    """
+
+    assert theta.shape == torch.Size([3]), "theta must have exactly 3 entries: (3,)."
+
+    X = model.features_float_log
+
+    pre = theta[0] * X[:, 0]
+    post = theta[1] * X[:, 1]
+    postall = theta[2] * X[:, 2]
+
+    log_dso = pre + post - postall
+
+    return np.random.binomial(n=1, p=1 / (1 + np.exp(-log_dso)))
+
+
+def bernoulli_rule_linear(model: RuleSimulator, theta: ndarray) -> ndarray:
+    """Return Bernoulli samples of present connections ijk.
+
+    Predict the Bernoulli connection probability of neurons i and j
+    in voxel k from dense structural overlap.
+
+    Parameters theta act in linear space for better interpretability.
+    """
+
+    assert theta.shape == torch.Size([3]), "theta must have exactly 3 entries: (3,)."
+
+    X = model.features_float
+
+    pre = theta[0] * X[:, 0]
+    post = theta[1] * X[:, 1]
+    postall = theta[2] * X[:, 2]
+
+    dso = pre * post / postall
+
+    # Using the linearized version of the canonical link function.
+    return np.random.binomial(n=1, p=1 / (1 + 1 / dso))
+
+
+def bernoulli_rule_linear_constrained(model: RuleSimulator, theta: ndarray) -> ndarray:
+    """Return Bernoulli samples of present connections ijk.
+
+    Predict the Bernoulli connection probability of neurons i and j
+    in voxel k from dense structural overlap.
+
+    Parameters theta act in linear space for better interpretability.
+    """
+
+    assert theta.shape == torch.Size([3]), "theta must have exactly 3 entries: (3,)."
+
+    X = model.features_float
+
+    pre = theta[0] * X[:, 0]
+    post = theta[1] * X[:, 1]
+    postall = theta[2] * model.postall_from_post(post)
+
+    dso = pre * post / postall
+
+    # Using the linearized version of the canonical link function.
+    return np.random.binomial(n=1, p=1 / (1 + 1 / dso))
+
+def peters_rule_subcellular(model: RuleSimulator, theta: ndarray):
     # Sample with probability theta for each ijk where ij meet (feature == 1)
     # Feature is 0 wherever they do not meet.
     synapses = np.random.binomial(n=1, p=theta * model.features_float)
