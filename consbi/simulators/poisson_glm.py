@@ -23,8 +23,11 @@ prior_params = dict(low=0.01 * torch.ones(3), high=2.0 * torch.ones(3))
 
 def poisson_glm(parameters, upper_rate_bound: int = 100_000):
 
+    assert parameters.ndim == 2
+    assert parameters.shape[1] == 3
+
     # Set theta3 negative to divide by it in the rule.
-    parameters[2] = -parameters[2]
+    parameters[:, 2] = -parameters[:, 2]
     rate = torch.exp(log_features.mm(parameters.T)).T
     data = pyro.sample("data", pdist.Poisson(rate=rate.clamp(0, upper_rate_bound)))
     return data
