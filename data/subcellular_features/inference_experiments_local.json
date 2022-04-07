@@ -1,0 +1,31 @@
+[
+    {
+        "name": "meet_in_cube",
+        "identifier": "peters-subcellular",
+        "description": "invivo: VPM to C2 column, 7 empirical measurements",
+        "rule": "bernoulli",
+        "feature-set": "set-7",
+        "prior": {
+            "low": [
+                0.5,
+                0.5,
+                -1.5
+            ],
+            "high": [
+                1.5,
+                1.5,
+                -0.5
+            ]
+        },
+        "numSimulations": 1000,
+        "constraints": [
+            "897f7fba-714c-4e2e-9f9c-552e3815fb34",
+            "8bbcab58-cd1e-48ac-b7ef-583e8a077a9f",
+            "7d6ff52f-0810-4ff8-8bad-e41173c5d2ff",
+            "1c32cfac-828a-46ce-acaa-8de786e6c22f",
+            "1d0687e0-bb9e-4cb1-9ed5-fcc00cd29c4d",
+            "fe21fc12-9bda-45c9-857a-385b418a1116",
+            "2eab5e02-e8da-485e-8989-41554deae0c1"
+        ]
+    }
+]
