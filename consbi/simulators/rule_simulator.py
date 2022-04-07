@@ -238,6 +238,7 @@ class RuleSimulator:
         max_rate: int = 10,
         verbose: bool = False,
         num_subsampling_pairs: int = -1,
+        prelocate_postall_offset: bool = False,
     ) -> None:
         """Create rule simulator by passing the path to the model data and the rule.
 
@@ -307,14 +308,10 @@ class RuleSimulator:
         # Load required features from model data files.
         features_int, features_float = self.load_features()
 
-        features_float = features_float.reshape(1, -1)
-
         self.features_int = features_int
         self.features_float = features_float
         self.features_float_log = self.get_log_features(features_float)
 
-        self.global_norm = self.features_float[:, 2].mean()
-        self.log_global_norm = np.log(self.global_norm)
         self.constraints = constraints
         self.n_constraints = len(constraints["masks"])
         # Pre locate features and ids per constraint.
@@ -329,7 +326,9 @@ class RuleSimulator:
         # Prelocate indices for calculating postall from post.
         self.prelocate_post_sum_idxs()
 
-        if not "peters" in experiment_name:
+        if prelocate_postall_offset:
+            self.global_norm = self.features_float[:, 2].mean()
+            self.log_global_norm = np.log(self.global_norm)
             self.postall_offset = self.get_postall_offset()
 
             self.prelocate_property_masks()
@@ -615,7 +614,7 @@ class RuleSimulator:
         else:
             theta_numpy = theta
 
-        return theta_numpy
+        return theta_numpy.squeeze()
 
     def load_features(self) -> Tuple[ndarray, ndarray]:
         """Return features loaded from file for given model and constraints."""
@@ -640,7 +639,10 @@ class RuleSimulator:
         if self.verbose:
             print(f"Time elapsed: {time.time() - start}")
 
-        return features_int, features_float
+        if features_float.ndim == 1:
+            features_float = features_float.reshape(-1, 1)
+
+        return np.atleast_2d(features_int), np.atleast_2d(features_float)
 
     def get_log_features(self, features):
 
@@ -648,8 +650,7 @@ class RuleSimulator:
         features[features == 0] = 1e-10
 
         # -1 coding for missing cube will become NaN.
-        log_features = np.ones_like(features) * float("nan")
-        log_features[:, :-1] = np.log(features[:, :-1])
+        log_features = np.log(features)
 
         # The actual features must be finite.
         assert np.isfinite(log_features[:, :3]).all(), "log features must be finite."
