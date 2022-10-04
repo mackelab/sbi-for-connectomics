@@ -11,7 +11,6 @@ REQUIRED = [
     "matplotlib",
     "numpy",
     "scipy",
-    "sbi>=0.13.2",
     "torch>=1.5.1",
     "pyro-ppl>=1.3.1",
     "tqdm",
