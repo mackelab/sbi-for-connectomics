@@ -23,7 +23,6 @@ class DistanceRuleSimulator:
     def __init__(
         self,
         path_to_model,
-        path_to_features,
         num_subsampling_pairs: int = -1,
         cube_size: int = 25,
         feature_set_name: str = "set-7",
@@ -49,6 +48,8 @@ class DistanceRuleSimulator:
         self.num_subsampling_pairs = num_subsampling_pairs
 
         # Load features
+        path_to_features = os.path.join(path_to_model, "features")
+        path_to_mask = os.path.join(path_to_model, "masks")
         features = np.loadtxt(
             path_to_features + f"/features_{feature_set_name}_float.tsv",
             dtype=np.float32,
@@ -93,7 +94,7 @@ class DistanceRuleSimulator:
         self.unique_pairs_per_pop = []
         for publication in self.publications:
             maskFile = os.path.join(
-                path_to_features,
+                path_to_mask,
                 "mask_{}_{}.txt".format(feature_set_name, publication["ID"]),
             )
             mask = np.loadtxt(maskFile, dtype="uint32")
@@ -632,7 +633,7 @@ class RuleSimulator:
         )
 
         if self.verbose:
-            print("loading features ...")
+            print("Loading features, this may take a while...") 
         features_int = np.loadtxt(filenameInt, dtype=np.int32)
         features_float = np.loadtxt(filenameFloat, dtype=np.float32)
 
