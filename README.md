@@ -14,11 +14,11 @@ Once `git-lfs` is installed locally, one can pull the large files contained in t
 
 ## Examples
 
-The `notebook` folder contains three notebooks showing how to `simulate` connectomics data, how to use SBI to `infer` parameters, and how to `analyze` the resulting posteriors.
+The `tutorials` folder contains three notebooks showing how to `simulate` connectomics data, how to use SBI to `infer` parameters, and how to `analyze` (TODO) the resulting posteriors.
 
 ## Reproducibility
 
-The `paper` folder contains notebooks for reproducing all figures presented in the main text of the paper.
+The `figures` folder contains notebooks for reproducing all figures presented in the main text of the paper.
 
 ## Issues, questions
 
