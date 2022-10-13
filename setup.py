@@ -8,16 +8,17 @@ AUTHOR = "Jan Bölts, Philipp Harth"
 REQUIRES_PYTHON = ">=3.6.0"
 
 REQUIRED = [
+    "jupyter",
     "matplotlib",
     "numpy",
     "scipy",
-    "sbi>=0.13.2",
+    "sbi==0.14.2",
     "torch>=1.5.1",
     "pyro-ppl>=1.3.1",
     "tqdm",
     "scikit-learn",
     "pandas",
-    "sbibm @ git+https://github.com/mackelab/sbibm@connectomics-task#egg=sbibm",
+    # "sbibm @ git+https://github.com/mackelab/sbibm@connectomics-task#egg=sbibm",
     "svgutils==0.3.1",
     "invoke",
 ]
@@ -29,7 +30,6 @@ EXTRAS = {
         "deepdiff",
         "flake8",
         "isort",
-        "jupyter",
         "pep517",
         "pytest",
         "pyyaml",

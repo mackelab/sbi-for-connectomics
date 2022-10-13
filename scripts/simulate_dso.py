@@ -15,8 +15,8 @@ save_data = True
 verbose = True
 # set number of neuron pairs sampled from the connectome to mimick experimental settings, e.g., 50
 num_subsampling_pairs = 50
-num_simulations = 10  # 1_000_000
-num_workers = 1 # 20
+num_simulations = 100
+num_workers = 10
 
 prior = MultivariateNormal(torch.ones(3), torch.eye(3))
 simulator = RuleSimulator(path_to_model, default_rule, verbose=verbose, num_subsampling_pairs=num_subsampling_pairs)
