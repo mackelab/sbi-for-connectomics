@@ -1,11 +1,11 @@
 import pickle
-import torch
-
-
-from consbi.simulators import DistanceRuleSimulator
 from pathlib import Path
+
+import torch
 from sbi.inference import simulate_for_sbi
 from sbi.utils import BoxUniform
+
+from consbi.simulators import DistanceRuleSimulator
 
 # set parameters
 BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
@@ -27,19 +27,29 @@ save_data = True
 #     "set-5"  # Set 5 holds common cubes, min distance and axon-dendrite product for cube size 50mu-m
 
 prior = BoxUniform(torch.zeros(1), torch.ones(1) * 100)
-model = DistanceRuleSimulator(path_to_model, path_to_cellular_features,
-                            feature_set_name="set-6", 
-                            num_subsampling_pairs=num_subsampling_pairs, cube_size=cube_size)
+model = DistanceRuleSimulator(
+    path_to_model,
+    path_to_cellular_features,
+    feature_set_name="set-6",
+    num_subsampling_pairs=num_subsampling_pairs,
+    cube_size=cube_size,
+)
+
 
 def batch_simulator(theta):
-    return model.rule(theta, 
-        feature=model.common_cubes, #  Corresponds to feature set 6.
-        connection_fun=model.cutoff_rule  # cutoff rule forms a connection when feature crosses a threshold.
+    return model.rule(
+        theta,
+        feature=model.common_cubes,  #  Corresponds to feature set 6.
+        connection_fun=model.cutoff_rule,  # cutoff rule forms a connection when feature crosses a threshold.
     )
 
 
-theta, x = simulate_for_sbi(batch_simulator, prior, num_simulations=num_simulations, num_workers=num_workers)
+theta, x = simulate_for_sbi(
+    batch_simulator, prior, num_simulations=num_simulations, num_workers=num_workers
+)
 
 if save_data:
-    with open(save_folder + f"/presimulated_distance_rule_n{num_simulations}.p", "wb") as fh:
+    with open(
+        save_folder + f"/presimulated_distance_rule_n{num_simulations}.p", "wb"
+    ) as fh:
         pickle.dump(dict(prior=prior, theta=theta, x=x), fh)

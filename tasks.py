@@ -1,5 +1,6 @@
-from invoke import task
 from pathlib import Path
+
+from invoke import task
 
 basepath = "/Users/janbolts/qode/sbi-for-connectomics"
 overleaf = "/Users/janbolts/qode/connectomics-inference-manuscript"
@@ -12,10 +13,12 @@ fig_names = {
     "3": "paper/fig3",
 }
 
+
 @task
 def convertpngpdf(c, fig):
     _convertsvg2pdf(c, fig)
     _convertpdf2png(c, fig)
+
 
 @task
 def syncoverleaf(c, fig):

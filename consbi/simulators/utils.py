@@ -1,8 +1,9 @@
-import os
-import json
-import numpy as np
 import itertools
+import json
+import os
 from functools import cmp_to_key
+
+import numpy as np
 
 
 def getInferenceExperimentSpec(experiments, identifier):
@@ -187,41 +188,51 @@ def pruneFeatureSetSubcellular(featureSetInt, featureSetFloat, masks):
         masksNew.append(newMask)
     return prunedFeatureSetInt, prunedFeatureSetFloat, masksNew
 
+
 def binSynapseCounts(ijk_synapse_counts, ijk_depth_idx_mapping, num_bins):
     """Returns average number of synapse per cortical depth.
-    
+
     NOTE: Slow version with for loops.
-    
+
     Given synapse counts from the rule simulator for each ijk combination,
-    and a mapping from ijk to the corresponding cortical depth, 
-    add up the synpase counts for each cortical depth index. 
+    and a mapping from ijk to the corresponding cortical depth,
+    add up the synpase counts for each cortical depth index.
     """
-    
-    assert ijk_synapse_counts.shape[0] == ijk_depth_idx_mapping.shape[0], "counts and idx mapping must match."
+
+    assert (
+        ijk_synapse_counts.shape[0] == ijk_depth_idx_mapping.shape[0]
+    ), "counts and idx mapping must match."
 
     synapses_per_depth = np.zeros(num_bins)
     for i in range(0, ijk_synapse_counts.shape[0]):
         bin_idx = ijk_depth_idx_mapping[i]
-        if(bin_idx >= 0):
+        if bin_idx >= 0:
             synapses_per_depth[bin_idx] += ijk_synapse_counts[i]
     return synapses_per_depth
 
-def collect_synapse_counts_over_depth(ijk_synapse_counts, ijk_depth_idx_mapping, num_bins):
+
+def collect_synapse_counts_over_depth(
+    ijk_synapse_counts, ijk_depth_idx_mapping, num_bins
+):
     """Returns average number of synapse per cortical depth.
-    
+
     NOTE: Fast version with for logical indexing.
-    
+
     Given synapse counts from the rule simulator for each ijk combination,
-    and a mapping from ijk to the corresponding cortical depth, 
-    add up the synpase counts for each cortical depth index. 
+    and a mapping from ijk to the corresponding cortical depth,
+    add up the synpase counts for each cortical depth index.
     """
     # find indices that belong to the VPM pairs AND have a synapse
-    idx_with_synapse = np.where(np.logical_and(ijk_depth_idx_mapping>=0, ijk_synapse_counts>0))[0]
+    idx_with_synapse = np.where(
+        np.logical_and(ijk_depth_idx_mapping >= 0, ijk_synapse_counts > 0)
+    )[0]
 
     # count how often this occurs for each cortical depths
-    depth_idx, counts = np.unique(ijk_depth_idx_mapping[idx_with_synapse], return_counts=True)
-    
+    depth_idx, counts = np.unique(
+        ijk_depth_idx_mapping[idx_with_synapse], return_counts=True
+    )
+
     synapses_per_depth = np.zeros(num_bins)
     synapses_per_depth[depth_idx] = counts
-    
+
     return synapses_per_depth

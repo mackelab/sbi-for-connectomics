@@ -1,11 +1,12 @@
+import time
+from typing import Callable, Tuple, Union
+
 import numpy as np
 import torch
-import time
-
-from .utils import *
 from numpy import ndarray
 from torch import Tensor
-from typing import Callable, Tuple, Union
+
+from .utils import *
 
 
 class DistanceRuleSimulator:
@@ -258,14 +259,14 @@ class RuleSimulator:
         """
 
         literature_population_ids = [
-             "897f7fba-714c-4e2e-9f9c-552e3815fb34",
-             "8bbcab58-cd1e-48ac-b7ef-583e8a077a9f",
-             "7d6ff52f-0810-4ff8-8bad-e41173c5d2ff",
-             "1c32cfac-828a-46ce-acaa-8de786e6c22f",
-             "1d0687e0-bb9e-4cb1-9ed5-fcc00cd29c4d",
-             "fe21fc12-9bda-45c9-857a-385b418a1116",
-             "2eab5e02-e8da-485e-8989-41554deae0c1",
-         ]
+            "897f7fba-714c-4e2e-9f9c-552e3815fb34",
+            "8bbcab58-cd1e-48ac-b7ef-583e8a077a9f",
+            "7d6ff52f-0810-4ff8-8bad-e41173c5d2ff",
+            "1c32cfac-828a-46ce-acaa-8de786e6c22f",
+            "1d0687e0-bb9e-4cb1-9ed5-fcc00cd29c4d",
+            "fe21fc12-9bda-45c9-857a-385b418a1116",
+            "2eab5e02-e8da-485e-8989-41554deae0c1",
+        ]
 
         self.path_to_model = path_to_model
         self.verbose = verbose
@@ -290,8 +291,8 @@ class RuleSimulator:
             extend_sort=True,
         )
         self.publications = [
-             p for p in publications if p["ID"] in literature_population_ids
-         ]
+            p for p in publications if p["ID"] in literature_population_ids
+        ]
         self.population_masks = []
         for publication in self.publications:
             maskFile = os.path.join(
@@ -301,7 +302,7 @@ class RuleSimulator:
             )
             mask = np.loadtxt(maskFile, dtype="uint32")
             self.population_masks.append(mask)
-    
+
         constraints = getConstraints(
             self.publications, self.feature_set, os.path.join(path_to_model, "masks")
         )
@@ -608,7 +609,9 @@ class RuleSimulator:
     def process_theta(self, theta: Union[ndarray, Tensor]) -> ndarray:
 
         if theta.ndim > 1:
-            assert theta.shape[0] == 1, "rule simulator simulates single parameters only."
+            assert (
+                theta.shape[0] == 1
+            ), "rule simulator simulates single parameters only."
 
         if isinstance(theta, Tensor):
             theta_numpy = theta.numpy()
@@ -633,7 +636,7 @@ class RuleSimulator:
         )
 
         if self.verbose:
-            print("Loading features, this may take a while...") 
+            print("Loading features, this may take a while...")
         features_int = np.loadtxt(filenameInt, dtype=np.int32)
         features_float = np.loadtxt(filenameFloat, dtype=np.float32)
 
@@ -1083,6 +1086,7 @@ def bernoulli_rule_linear_constrained(model: RuleSimulator, theta: ndarray) -> n
 
     # Using the linearized version of the canonical link function.
     return np.random.binomial(n=1, p=1 / (1 + 1 / dso))
+
 
 def peters_rule_subcellular(model: RuleSimulator, theta: ndarray):
     # Sample with probability theta for each ijk where ij meet (feature == 1)
