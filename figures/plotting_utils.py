@@ -19,7 +19,11 @@ def color_boxplot(thos, bp, colors, alpha=0.7):
 
 
 # plotting 1D marginals, e.g., for showing posterior predictives.
-def custom_marginal_plot(ax, x, points, x_label, points_label, color, 
+def custom_marginal_plot(ax, x, 
+                         points, 
+                         x_label, 
+                         points_label, 
+                         color, 
                          show_xlabels=True,
                          labels=None,
                          num_bins=10, 
@@ -41,6 +45,8 @@ def custom_marginal_plot(ax, x, points, x_label, points_label, color,
         axi.spines["top"].set_visible(False)
         axi.spines["left"].set_visible(False)
         plt.yticks([])
+        if points is not None:
+            plt.axvline(x=points[0, idx], color="k", label=points_label)
 
         plt.xlim([0, 1])
         plt.xticks([0, 1])
@@ -48,8 +54,6 @@ def custom_marginal_plot(ax, x, points, x_label, points_label, color,
                               label=x_label, histtype=histtype)
         if show_xlabels:
             plt.xlabel(labels[idx])
-        if points is not None:
-            plt.axvline(x=points[0, idx], color="k", label=points_label)
     # plt.sca(ax[-1, -1])
     # plt.axis("off")
     # plt.sca(ax[-1, -2])
