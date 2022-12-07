@@ -769,8 +769,8 @@ def one_param_rule(model: RuleSimulator, theta: ndarray):
 def one_param_rule_linear_constrained(model: RuleSimulator, theta: ndarray):
     """Scale the entire DSO."""
 
-    pre = model.features_float_log[:, 2]
-    post = theta * model.features_float_log[:, 1]
+    pre = model.features_float[:, 0]
+    post = theta * model.features_float[:, 1]
     postall = model.postall_from_post(post)
 
     dso = pre * post / postall
