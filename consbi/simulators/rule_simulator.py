@@ -766,6 +766,17 @@ def one_param_rule(model: RuleSimulator, theta: ndarray):
     clipped_dso = np.clip(log_dso, -model.max_rate, model.max_rate)
     return draw_synapses_from_poisson(model, rate=np.exp(clipped_dso))
 
+def one_param_rule_linear_constrained(model: RuleSimulator, theta: ndarray):
+    """Scale the entire DSO."""
+
+    pre = model.features_float_log[:, 2]
+    post = theta * model.features_float_log[:, 1]
+    postall = model.postall_from_post(post)
+
+    dso = pre * post / postall
+    
+    return draw_synapses_from_poisson(model, rate=dso)
+
 
 def two_param_rule(model: RuleSimulator, theta: ndarray):
     """Scale pre*post and postall seperately."""
@@ -876,6 +887,29 @@ def default_rule_linear_constrained(
     pre = theta[0] * model.features_float[:, 0]
     post = theta[1] * model.features_float[:, 1]
     postall = theta[2] * model.postall_from_post(post)
+    dso = pre * post / postall
+
+    return draw_synapses_from_poisson(model, rate=dso)
+
+def default_rule_linear_constrained_2p(
+    model: RuleSimulator,
+    theta: ndarray,
+) -> ndarray:
+    """Apply constrained dense structural overlap rule and return synapse counts.
+
+    Without extra parameter on postAll.
+
+    The added constraint adds the **scaled** post_j target count to the denominator,
+    ensuring that the denominator is never small than scaled post_j.
+    """
+
+    assert theta.shape == (2,), "The default DSO needs theta with shape (2,)."
+
+    # Set param for fourth column containing cortical depth to zero.
+
+    pre = theta[0] * model.features_float[:, 0]
+    post = theta[1] * model.features_float[:, 1]
+    postall = model.postall_from_post(post)
     dso = pre * post / postall
 
     return draw_synapses_from_poisson(model, rate=dso)
