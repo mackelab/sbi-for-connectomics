@@ -32,6 +32,21 @@ def poisson_glm(parameters, upper_rate_bound: int = 100_000):
     data = pyro.sample("data", pdist.Poisson(rate=rate.clamp(0, upper_rate_bound)))
     return data
 
+def two_param_poisson_glm(parameters, upper_rate_bound: int = 100_000, offset = 2):
+
+    assert parameters.ndim == 2
+    assert parameters.shape[1] == 2
+
+    # Set theta3 negative to divide by it in the rule.
+    theta = torch.zeros((parameters.shape[0], 3))
+    theta[:, 0] = parameters[:, 0]
+    theta[:, 1] = offset - parameters[:, 0]
+    theta[:, 2] = -parameters[:, 1]
+    rate = torch.exp(log_features.mm(theta.T)).T
+    data = pyro.sample("data", pdist.Poisson(rate=rate.clamp(0, upper_rate_bound)))
+
+    return data
+
 
 def poisson_glm_constrained(parameters, upper_rate_bound: int = 100_000):
     # Add theta2 * x2 to the denominator to constrain the rule:

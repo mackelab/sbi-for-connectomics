@@ -781,6 +781,21 @@ def two_param_rule(model: RuleSimulator, theta: ndarray):
     return draw_synapses_from_poisson(model, rate=np.exp(clipped_dso))
 
 
+def two_param_rule_dependent(model: RuleSimulator, theta: ndarray, offset: float=3.0):
+    """Scale pre*post and postall seperately."""
+
+    assert theta.shape == (2,), "This is a two-parameter rule."
+
+    log_dso = (
+        theta[0] * model.features_float_log[:, 0]
+        + (offset - theta[0]) * model.features_float_log[:, 1]
+        - theta[1] * model.features_float_log[:, 2]
+    )
+    # Clip rate from above and below.
+    clipped_dso = np.clip(log_dso, -model.max_rate, model.max_rate)
+    return draw_synapses_from_poisson(model, rate=np.exp(clipped_dso))
+
+
 def default_rule(
     model: RuleSimulator,
     theta: ndarray,
@@ -816,6 +831,29 @@ def default_rule_linear(
     pre = theta[0] * model.features_float[:, 0]
     post = theta[1] * model.features_float[:, 1]
     postall = theta[2] * model.features_float[:, 2]
+    dso = pre * post / postall
+
+    return draw_synapses_from_poisson(model, rate=dso)
+
+
+def dso_linear_two_param(
+    model: RuleSimulator,
+    theta: ndarray,
+    offset: float = 3.0,
+) -> ndarray:
+    """Apply constrained dense structural overlap rule and return synapse counts.
+
+    The added constraint adds the **scaled** post_j target count to the denominator,
+    ensuring that the denominator is never small than scaled post_j.
+    """
+
+    assert theta.shape == (2,), "The default DSO needs theta with shape (2,)."
+
+    # Set param for fourth column containing cortical depth to zero.
+
+    pre = theta[0] * model.features_float[:, 0]
+    post = (offset - theta[0]) * model.features_float[:, 1]
+    postall = theta[1] * model.features_float[:, 2]
     dso = pre * post / postall
 
     return draw_synapses_from_poisson(model, rate=dso)
