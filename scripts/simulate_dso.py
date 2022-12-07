@@ -14,6 +14,7 @@ from consbi.simulators import (
     dso_linear_two_param, 
     two_param_rule_dependent,
     default_rule_constrained_two_param,
+    default_rule_linear_constrained_2p,
 )
 
 # set parameters
@@ -24,15 +25,15 @@ save_data = True
 verbose = True
 # set number of neuron pairs sampled from the connectome to mimick experimental settings, e.g., 50
 num_subsampling_pairs = 50
-num_simulations = 200_000
+num_simulations = 100_000
 batch_size = 100
 num_workers = 90
 num_dim = 2
 prior_upper_bound = 3
 
-rule = default_rule_constrained_two_param
+rule = default_rule_linear_constrained_2p
 
-rule_str = "default_rule_constrained_two_param"
+rule_str = "dso_linear_constrained_two_param"
 prior_str = "uniform"
 
 prior = BoxUniform(torch.zeros(num_dim), prior_upper_bound * torch.ones(num_dim))
