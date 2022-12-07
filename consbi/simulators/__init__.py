@@ -7,5 +7,6 @@ from .rule_simulator import (
     default_rule_linear, 
     two_param_rule_dependent,
     dso_linear_two_param,
+    default_rule_constrained_two_param,
 )
 from .utils import *

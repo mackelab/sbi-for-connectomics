@@ -13,6 +13,7 @@ from consbi.simulators import (
     default_rule_linear, 
     dso_linear_two_param, 
     two_param_rule_dependent,
+    default_rule_constrained_two_param,
 )
 
 # set parameters
@@ -29,9 +30,9 @@ num_workers = 90
 num_dim = 2
 prior_upper_bound = 3
 
-rule = partial(two_param_rule_dependent, offset=prior_upper_bound)
+rule = default_rule_constrained_two_param
 
-rule_str = "dso_two_param"
+rule_str = "default_rule_constrained_two_param"
 prior_str = "uniform"
 
 prior = BoxUniform(torch.zeros(num_dim), prior_upper_bound * torch.ones(num_dim))
@@ -41,6 +42,7 @@ simulator = RuleSimulator(
     rule,
     verbose=verbose,
     num_subsampling_pairs=num_subsampling_pairs,
+    prelocate_postall_offset=True,
 )
 
 def batch_simulator(theta):
