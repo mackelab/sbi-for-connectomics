@@ -27,18 +27,20 @@ save_data = True
 verbose = True
 # set number of neuron pairs sampled from the connectome to mimick experimental settings, e.g., 50
 num_subsampling_pairs = 50
-num_simulations = 100_000
-batch_size = 100
-num_workers = 90
-num_dim = 1
-prior_upper_bound = 3
+num_simulations = 500_000
+batch_size = 1000
+num_workers = 50
+num_dim = 2
+# prior_upper_bound = 3
+prior_scale = 0.6
 
-rule = one_param_rule_linear_constrained
+rule = default_rule_constrained_two_param
 
-rule_str = "dso_linear_constrained_one_param"
-prior_str = "uniform"
+rule_str = "dso_constrained_2p"
+prior_str = f"uniform{prior_scale}"
 
-prior = BoxUniform(torch.zeros(num_dim), prior_upper_bound * torch.ones(num_dim))
+prior = BoxUniform((1 - prior_scale) * torch.ones(num_dim), (1 + prior_scale) * torch.ones(num_dim))
+
 # prior = MultivariateNormal(torch.ones(3), torch.eye(3))
 simulator = RuleSimulator(
     path_to_model,
