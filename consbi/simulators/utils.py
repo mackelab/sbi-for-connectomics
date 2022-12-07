@@ -1,9 +1,12 @@
 import itertools
 import json
 import os
+import random
+
 from functools import cmp_to_key
 
 import numpy as np
+import torch
 
 
 def getInferenceExperimentSpec(experiments, identifier):
@@ -236,3 +239,17 @@ def collect_synapse_counts_over_depth(
     synapses_per_depth[depth_idx] = counts
 
     return synapses_per_depth
+
+
+def seed_all_backends(seed: int = None) -> None:
+    """Sets all python, numpy and pytorch seeds."""
+
+    if seed is None:
+        seed = int(torch.randint(1_000_000, size=(1,)))
+
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True  # type: ignore
+    torch.backends.cudnn.benchmark = False  # type: ignore

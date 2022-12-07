@@ -47,6 +47,21 @@ def two_param_poisson_glm(parameters, upper_rate_bound: int = 100_000, offset = 
 
     return data
 
+def two_param_poisson_glm_denom(parameters, upper_rate_bound: int = 100_000):
+
+    assert parameters.ndim == 2
+    assert parameters.shape[1] == 2
+
+    # Set theta3 negative to divide by it in the rule.
+    theta = torch.zeros((parameters.shape[0], 3))
+    theta[:, 0] = parameters[:, 0]
+    theta[:, 1] = parameters[:, 1]
+    theta[:, 2] = -0.5 * parameters[:, 1]
+    rate = torch.exp(log_features.mm(theta.T)).T
+    data = pyro.sample("data", pdist.Poisson(rate=rate.clamp(0, upper_rate_bound)))
+
+    return data
+
 
 def poisson_glm_constrained(parameters, upper_rate_bound: int = 100_000):
     # Add theta2 * x2 to the denominator to constrain the rule:
@@ -62,7 +77,7 @@ def poisson_glm_constrained(parameters, upper_rate_bound: int = 100_000):
     log_post = theta2_batch.unsqueeze(1) * log_features[:, 1].unsqueeze(0)
 
     # Calculate postall in linear space to combine it with current post feature.
-    log_post_all = theta3_batch * torch.log(
+    log_post_all = torch.log(
         features[:, 2].repeat(num_batch, 1).T
         - features[:, 1].repeat(num_batch, 1).T
         + features[:, 1].unsqueeze(1) ** theta2_batch.unsqueeze(0)

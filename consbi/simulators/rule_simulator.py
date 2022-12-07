@@ -903,6 +903,28 @@ def default_rule_constrained(
     clipped_dso = np.clip(log_dso, -model.max_rate, model.max_rate)
     return draw_synapses_from_poisson(model, rate=np.exp(clipped_dso))
 
+def default_rule_constrained_two_param(
+    model: RuleSimulator,
+    theta: ndarray,
+) -> ndarray:
+    """Apply constrained dense structural overlap rule and return synapse counts.
+
+    The added constraint adds the **scaled** post_j target count to the denominator,
+    ensuring that the denominator is never small than scaled post_j.
+    """
+
+    assert theta.shape == (2,), "The default DSO needs theta with shape (2,)."
+
+    log_pre = theta[0] * model.features_float_log[:, 0]
+    log_post = theta[1] * model.features_float_log[:, 1]
+    # To calculate postall from post we need to go to linear space.
+    log_postall = np.log(model.postall_from_post(np.exp(log_post)))
+    log_dso = log_pre + log_post - log_postall
+
+    # Clip rate from above and below.
+    clipped_dso = np.clip(log_dso, -model.max_rate, model.max_rate)
+    return draw_synapses_from_poisson(model, rate=np.exp(clipped_dso))
+
 
 def default_rule_pre_calculated_linear(
     model: RuleSimulator, pre: ndarray, theta: ndarray
