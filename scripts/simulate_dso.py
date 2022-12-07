@@ -1,5 +1,5 @@
 import pickle
-# from functools import partial
+from functools import partial
 from pathlib import Path
 
 import torch
@@ -7,7 +7,13 @@ from sbi.inference import simulate_for_sbi
 from sbi.utils import BoxUniform
 from torch.distributions import MultivariateNormal
 
-from consbi.simulators import RuleSimulator, default_rule, default_rule_linear
+from consbi.simulators import (
+    RuleSimulator, 
+    default_rule, 
+    default_rule_linear, 
+    dso_linear_two_param, 
+    two_param_rule_dependent,
+)
 
 # set parameters
 BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
@@ -17,13 +23,15 @@ save_data = True
 verbose = True
 # set number of neuron pairs sampled from the connectome to mimick experimental settings, e.g., 50
 num_subsampling_pairs = 50
-num_simulations = 120_000
+num_simulations = 200_000
 batch_size = 100
 num_workers = 90
-num_dim = 3
+num_dim = 2
 prior_upper_bound = 3
-rule = default_rule_linear
-rule_str = "dso_linear"
+
+rule = partial(two_param_rule_dependent, offset=prior_upper_bound)
+
+rule_str = "dso_two_param"
 prior_str = "uniform"
 
 prior = BoxUniform(torch.zeros(num_dim), prior_upper_bound * torch.ones(num_dim))
