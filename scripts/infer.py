@@ -25,12 +25,12 @@ filenames = [
     # "/presimulated_dso_two_param_uniform_n200000.p"
     # "/presimulated_default_rule_constrained_two_param_uniform_n200000.p",
     # "/presimulated_dso_linear_constrained_two_param_uniform_n100000.p",
-    "/presimulated_dso__gaussian005_n1000000.p",
+#     "/presimulated_dso__gaussian005_n1000000.p",
     # "/presimulated_dso_linear_constrained_2p_uniform1_n500000.p",
     # "/presimulated_dso_constrained_2p_uniform0.2-0.4_n100000.p",
     # "/presimulated_dso_constrained_2p_uniform0.6_n500000.p",
+    "/presimulated_dso_uniform_06_16_n1000000.p",
 ]
-split = filenames[0].split("_")
 
 x = []
 theta = []
@@ -43,7 +43,8 @@ for filename in filenames:
 x = torch.cat(x)
 theta = torch.cat(theta)
 
-save_name = f"/npe_dso_gaussian005_n1000000.p"
+# exlude simulation prefix from filename.
+save_name = f"/npe_{filenames[0][filenames[0].index('_'):]}"
 
 # hyper parameters
 training_batch_size = 10000

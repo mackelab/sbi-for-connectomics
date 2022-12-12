@@ -1,9 +1,9 @@
-import itertools
 import json
 import os
 import random
 
 from functools import cmp_to_key
+from typing import Callable
 
 import numpy as np
 import torch
@@ -253,3 +253,16 @@ def seed_all_backends(seed: int = None) -> None:
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True  # type: ignore
     torch.backends.cudnn.benchmark = False  # type: ignore
+
+
+def get_batch_simulator(simulator) -> Callable:
+
+    def batch_simulator(theta):
+        """Return a batch of simulations by looping over a batch of parameters."""
+        assert theta.ndim > 1, "Theta must have a batch dimension."
+        # Simulate in loop
+        xs = list(map(simulator, theta))
+        # Stack over batch to keep x_shape
+        return torch.stack(xs).reshape(theta.shape[0], -1)
+
+    return batch_simulator

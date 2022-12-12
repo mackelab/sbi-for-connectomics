@@ -16,8 +16,9 @@ from consbi.simulators import (
     default_rule_constrained_two_param,
     default_rule_linear_constrained_2p,
     one_param_rule_linear_constrained,
-    
 )
+
+from consbi.simulators.utils import get_batch_simulator
 
 # set parameters
 BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
@@ -29,7 +30,7 @@ verbose = True
 num_subsampling_pairs = 50
 num_simulations = 500_000
 batch_size = 1000
-num_workers = 90
+num_workers = 24
 num_dim = 3
 # prior_upper_bound = 3
 prior_scale = 0.05
@@ -54,14 +55,7 @@ simulator = RuleSimulator(
     num_subsampling_pairs=num_subsampling_pairs,
     prelocate_postall_offset=False,
 )
-
-def batch_simulator(theta):
-        """Return a batch of simulations by looping over a batch of parameters."""
-        assert theta.ndim > 1, "Theta must have a batch dimension."
-        # Simulate in loop
-        xs = list(map(simulator, theta))
-        # Stack over batch to keep x_shape
-        return torch.stack(xs).reshape(theta.shape[0], -1)
+batch_simulator = get_batch_simulator(simulator)
 
 theta, x = simulate_for_sbi(
     batch_simulator, prior, num_simulations=num_simulations, num_workers=num_workers, 

@@ -8,7 +8,7 @@ from torch.distributions import MultivariateNormal
 
 from sbi.inference import SNPE, simulate_for_sbi
 
-from consbi.simulators.utils import seed_all_backends
+from consbi.simulators.utils import get_batch_simulator, seed_all_backends
 
 from consbi.simulators import (
     RuleSimulator, 
@@ -36,7 +36,6 @@ verbose = True
 xo = np.array([[0.4300, 0.4300, 0.4200, 0.6400, 0.1700, 0.4400, 0.0900]])
 
 rule = default_rule
-prior_scale = 0.05
 num_dim = 3
 batch_size = 100
 
@@ -48,15 +47,8 @@ simulator = RuleSimulator(
     num_subsampling_pairs=50,
     prelocate_postall_offset=False,
 )
-
-
-def batch_simulator(theta):
-        """Return a batch of simulations by looping over a batch of parameters."""
-        assert theta.ndim > 1, "Theta must have a batch dimension."
-        # Simulate in loop
-        xs = list(map(simulator, theta))
-        # Stack over batch to keep x_shape
-        return torch.stack(xs).reshape(theta.shape[0], 7)
+# wrap simulator to handle batches of parameters.
+batch_simulator = get_batch_simulator(simulator)
 
 
 ## collect and concatenate training data
@@ -72,6 +64,7 @@ filenames = [
     # "/presimulated_dso_constrained_2p_uniform0.6_n500000.p",
 #     "/presimulated_dso_uniform_06_16_n1000000.p",
 ]
+save_str = filenames[0][filenames[0].index("_"):-2]
 
 x = []
 theta = []
@@ -92,8 +85,8 @@ stop_after_epochs = 20
 de = "nsf"
 num_rounds = 3
 num_simulations_per_round = 200_000
-num_workers = 90
-save_name = f"/npe_dso_gaussian005_n1000000_r{num_rounds}x200k.p"
+num_workers = 24
+save_name = f"/npe_{save_str}_r{num_rounds}x{int(num_simulations_per_round/1000)}k.p"
 
 # training
 trainer = SNPE(
