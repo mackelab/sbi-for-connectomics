@@ -4,8 +4,6 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from torch.distributions import MultivariateNormal
-
 from sbi.inference import SNPE, simulate_for_sbi
 
 from consbi.simulators.utils import get_batch_simulator, seed_all_backends
@@ -35,8 +33,8 @@ verbose = True
 
 xo = np.array([[0.4300, 0.4300, 0.4200, 0.6400, 0.1700, 0.4400, 0.0900]])
 
-rule = default_rule
-num_dim = 3
+rule = default_rule_constrained_two_param
+num_dim = 2
 batch_size = 100
 
 ## Set up simulator
@@ -58,7 +56,8 @@ filenames = [
     # "/presimulated_dso_two_param_uniform_n200000.p"
     # "/presimulated_default_rule_constrained_two_param_uniform_n200000.p",
     # "/presimulated_dso_linear_constrained_two_param_uniform_n100000.p",
-    "/presimulated_dso__gaussian005_n1000000.p",
+    "/presimulated_dso_gaussian_05_n500000.p",
+    "/presimulated_dso_constrained_2p_gaussian_05_n500000.p"
     # "/presimulated_dso_linear_constrained_2p_uniform1_n500000.p",
     # "/presimulated_dso_constrained_2p_uniform0.2-0.4_n100000.p",
     # "/presimulated_dso_constrained_2p_uniform0.6_n500000.p",
@@ -83,10 +82,10 @@ training_batch_size = 10000
 validation_fraction = 0.1
 stop_after_epochs = 20
 de = "nsf"
-num_rounds = 3
-num_simulations_per_round = 200_000
+num_rounds = 2
+num_simulations_per_round = 100_000
 num_workers = 24
-save_name = f"/npe_{save_str}_r{num_rounds}x{int(num_simulations_per_round/1000)}k.p"
+save_name = f"/npe{save_str}r{num_rounds}x{int(num_simulations_per_round/1000)}k.p"
 
 # training
 trainer = SNPE(
@@ -125,13 +124,23 @@ for r_idx in range(num_rounds - 1):
     
     posteriors.append(trainer.build_posterior(density_estimator).set_default_x(xo))
     
-    
+
+# Simulate posterior predictive samples.
+thos, xos = simulate_for_sbi(
+        batch_simulator, 
+        posteriors[-1], 
+        num_simulations=10000, 
+        num_workers=num_workers, 
+        simulation_batch_size=batch_size,
+    )
 
 with open(save_folder + save_name, "wb") as fh:
     pickle.dump(dict(
             prior=prior, 
             density_estimator=density_estimator, 
             posteriors=posteriors,
+            thos=thos, 
+            xos=xos,
             kwargs=dict(
                 training_batch_size=training_batch_size,
                 validation_fraction=validation_fraction,
