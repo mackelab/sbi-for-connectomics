@@ -43,7 +43,7 @@ simulator = RuleSimulator(
     rule,
     verbose=True,
     num_subsampling_pairs=50,
-    prelocate_postall_offset=False,
+    prelocate_postall_offset=True,
 )
 # wrap simulator to handle batches of parameters.
 batch_simulator = get_batch_simulator(simulator)
@@ -56,7 +56,7 @@ filenames = [
     # "/presimulated_dso_two_param_uniform_n200000.p"
     # "/presimulated_default_rule_constrained_two_param_uniform_n200000.p",
     # "/presimulated_dso_linear_constrained_two_param_uniform_n100000.p",
-    "/presimulated_dso_gaussian_05_n500000.p",
+    # "/presimulated_dso_gaussian_05_n500000.p",
     "/presimulated_dso_constrained_2p_gaussian_05_n500000.p"
     # "/presimulated_dso_linear_constrained_2p_uniform1_n500000.p",
     # "/presimulated_dso_constrained_2p_uniform0.2-0.4_n100000.p",
@@ -131,7 +131,7 @@ thos, xos = simulate_for_sbi(
         posteriors[-1], 
         num_simulations=10000, 
         num_workers=num_workers, 
-        simulation_batch_size=batch_size,
+       simulation_batch_size=batch_size,
     )
 
 with open(save_folder + save_name, "wb") as fh:
