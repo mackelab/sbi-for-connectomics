@@ -22,7 +22,7 @@ from consbi.simulators.utils import get_batch_simulator
 BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
 path_to_model = BASE_DIR + "/data/structural_model"
 save_folder = BASE_DIR + "/data"
-save_data = True
+save_data = False
 verbose = True
 # set number of neuron pairs sampled from the connectome to mimick experimental settings, e.g., 50
 num_subsampling_pairs = 50
