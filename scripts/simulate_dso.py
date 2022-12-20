@@ -4,7 +4,6 @@ from pathlib import Path
 import torch
 from sbi.inference import simulate_for_sbi
 from sbi.utils import BoxUniform
-from torch.distributions import MultivariateNormal
 
 from consbi.simulators import (
     RuleSimulator, 
@@ -29,23 +28,23 @@ verbose = True
 num_subsampling_pairs = 50
 num_simulations = 500_000
 batch_size = 1000
-num_workers = 20
-num_dim = 2
+num_workers = 24
 # prior_upper_bound = 3
 prior_scale = 0.5
 
+num_dim = 2
 rule = default_rule_constrained_two_param
 
 rule_str = "dso_constrained_2p"
-prior_str = f"gaussian_05"
+prior_str = f"uniform0-3"
 
-# prior = BoxUniform(0.6 * torch.ones(num_dim), 1.6 * torch.ones(num_dim))
+prior = BoxUniform(torch.zeros(num_dim), 3.0 * torch.ones(num_dim))
 # from torch.distributions import Uniform
 # from sbi.utils import process_prior
 # prior, *_ = process_prior([
 #     Uniform(0.4 * torch.ones(num_dim), 0.6 * torch.ones(num_dim)), 
 #     Uniform(1.6 * torch.ones(num_dim), 2.0 * torch.ones(num_dim))])
-prior = MultivariateNormal(torch.ones(num_dim), prior_scale * torch.eye(num_dim))
+# prior = MultivariateNormal(torch.ones(num_dim), prior_scale * torch.eye(num_dim))
 
 simulator = RuleSimulator(
     path_to_model,
