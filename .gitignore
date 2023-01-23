@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.DS_Store
+*sbi-logs/
 
 # C extensions
 *.so
