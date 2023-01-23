@@ -4,23 +4,19 @@
 # sbi-for-connectomics
 
 This repository contains research code and figures of the "SBI for connectomics" paper (link to paper). 
-It also contains a small python package called `consbi` that allows to simulate different wiring rules in the structural model of the rat barrel cortex. 
+
+It is based on a small python package called `consbi` that allows to simulate different wiring rules in the structural model of the rat barrel cortex. 
+Additionally, it contains jupyter notebooks contains `tutorials` and code for reproducing the `figures` shown in the paper.
+Binary files with `data` and `results` for the work presented in the paper are stored using `git-lfs`. 
 
 The repository for running SBI including detailed tutorials is located at https://github.com/mackelab/sbi. 
 
 Please reach out and create an issue if you have any questions or encounter problems with using this repository.
 
 ## Getting started
-You can play around with the tutorials (see below) in the browser using the following link: 
+You can play around with the tutorials (see below) in the browser using the following google colab link: 
 
 To run code locally: clone the repository, `cd` into the local `sbi-for-connectomics` folder and run `pip install -e .`
-
-## Content
-The `tutorials` folder contains three notebooks showing how to `simulate` connectomics data, how to use SBI to `infer` parameters, and how to `analyze` (TODO) the resulting posteriors.
-
-The `figures` folder contains notebooks for reproducing all figures presented in the main text of the paper.
-
-The `data` and `results` folders contain binary files saved via `git-lfs` (see below).
 
 ## Binary files are provided via `git-lfs`
 
