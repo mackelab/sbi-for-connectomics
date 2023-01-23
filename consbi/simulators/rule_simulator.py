@@ -766,6 +766,7 @@ def one_param_rule(model: RuleSimulator, theta: ndarray):
     clipped_dso = np.clip(log_dso, -model.max_rate, model.max_rate)
     return draw_synapses_from_poisson(model, rate=np.exp(clipped_dso))
 
+
 def one_param_rule_linear_constrained(model: RuleSimulator, theta: ndarray):
     """Scale the entire DSO."""
 
@@ -774,7 +775,7 @@ def one_param_rule_linear_constrained(model: RuleSimulator, theta: ndarray):
     postall = model.postall_from_post(post)
 
     dso = pre * post / postall
-    
+
     return draw_synapses_from_poisson(model, rate=dso)
 
 
@@ -792,7 +793,7 @@ def two_param_rule(model: RuleSimulator, theta: ndarray):
     return draw_synapses_from_poisson(model, rate=np.exp(clipped_dso))
 
 
-def two_param_rule_dependent(model: RuleSimulator, theta: ndarray, offset: float=3.0):
+def two_param_rule_dependent(model: RuleSimulator, theta: ndarray, offset: float = 3.0):
     """Scale pre*post and postall seperately."""
 
     assert theta.shape == (2,), "This is a two-parameter rule."
@@ -891,6 +892,7 @@ def default_rule_linear_constrained(
 
     return draw_synapses_from_poisson(model, rate=dso)
 
+
 def default_rule_linear_constrained_2p(
     model: RuleSimulator,
     theta: ndarray,
@@ -936,6 +938,7 @@ def default_rule_constrained(
     # Clip rate from above and below.
     clipped_dso = np.clip(log_dso, -model.max_rate, model.max_rate)
     return draw_synapses_from_poisson(model, rate=np.exp(clipped_dso))
+
 
 def default_rule_constrained_two_param(
     model: RuleSimulator,

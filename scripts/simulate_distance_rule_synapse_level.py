@@ -1,4 +1,4 @@
-## Script for simulating data according to the distance based rule at the synapse level. 
+## Script for simulating data according to the distance based rule at the synapse level.
 # See main paper and tutorials/1_simulation for details.
 
 import pickle
@@ -49,6 +49,7 @@ theta, x = simulate_for_sbi(
 
 if save_data:
     with open(
-        save_folder + f"/presimulated_distance_rule_synapse_level_n{num_simulations}.p", "wb"
+        save_folder + f"/presimulated_distance_rule_synapse_level_n{num_simulations}.p",
+        "wb",
     ) as fh:
         pickle.dump(dict(prior=prior, theta=theta, x=x), fh)

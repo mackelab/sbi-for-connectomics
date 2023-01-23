@@ -6,16 +6,15 @@ from sbi.inference import simulate_for_sbi
 from sbi.utils import BoxUniform
 
 from consbi.simulators import (
-    RuleSimulator, 
-    default_rule, 
-    default_rule_linear, 
-    dso_linear_two_param, 
-    two_param_rule_dependent,
+    RuleSimulator,
+    default_rule,
     default_rule_constrained_two_param,
+    default_rule_linear,
     default_rule_linear_constrained_2p,
+    dso_linear_two_param,
     one_param_rule_linear_constrained,
+    two_param_rule_dependent,
 )
-
 from consbi.simulators.utils import get_batch_simulator
 
 # set parameters
@@ -44,7 +43,7 @@ prior = BoxUniform(torch.zeros(num_dim), 3.0 * torch.ones(num_dim))
 # from torch.distributions import Uniform
 # from sbi.utils import process_prior
 # prior, *_ = process_prior([
-#     Uniform(0.4 * torch.ones(num_dim), 0.6 * torch.ones(num_dim)), 
+#     Uniform(0.4 * torch.ones(num_dim), 0.6 * torch.ones(num_dim)),
 #     Uniform(1.6 * torch.ones(num_dim), 2.0 * torch.ones(num_dim))])
 # prior = MultivariateNormal(torch.ones(num_dim), prior_scale * torch.eye(num_dim))
 
@@ -60,10 +59,15 @@ batch_simulator = get_batch_simulator(simulator)
 
 # Simulate and save.
 theta, x = simulate_for_sbi(
-    batch_simulator, prior, num_simulations=num_simulations, num_workers=num_workers, 
+    batch_simulator,
+    prior,
+    num_simulations=num_simulations,
+    num_workers=num_workers,
     simulation_batch_size=batch_size,
 )
 
 if save_data:
-    with open(save_folder + f"/presimulated_{rule_str}_{prior_str}_n{num_simulations}.p", "wb") as fh:
+    with open(
+        save_folder + f"/presimulated_{rule_str}_{prior_str}_n{num_simulations}.p", "wb"
+    ) as fh:
         pickle.dump(dict(prior=prior, theta=theta, x=x), fh)

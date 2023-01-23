@@ -2,7 +2,6 @@ import pickle
 from pathlib import Path
 
 import torch
-
 from sbi.inference import SNPE
 
 from consbi.simulators.utils import seed_all_backends
@@ -27,8 +26,8 @@ filenames = [
 # in case we have multiple files we concatenate the data and parameters.
 x = []
 theta = []
-for filename in filenames:    
-    with open(load_folder + filename, "rb") as fh: 
+for filename in filenames:
+    with open(load_folder + filename, "rb") as fh:
         prior, th, xs = pickle.load(fh).values()
         x.append(xs.squeeze())
         theta.append(th)
@@ -47,27 +46,28 @@ de = "nsf"
 
 # training
 trainer = SNPE(
-    prior=prior, 
-    show_progress_bars=verbose, 
+    prior=prior,
+    show_progress_bars=verbose,
     density_estimator=de,
 )
 density_estimator = trainer.append_simulations(theta, x).train(
-    # max_num_epochs=1, 
+    # max_num_epochs=1,
     training_batch_size=training_batch_size,
-    validation_fraction=validation_fraction, 
+    validation_fraction=validation_fraction,
     stop_after_epochs=stop_after_epochs,
 )
 
 with open(save_folder + save_name, "wb") as fh:
-    pickle.dump(dict(
-            prior=prior, 
-            density_estimator=density_estimator, 
+    pickle.dump(
+        dict(
+            prior=prior,
+            density_estimator=density_estimator,
             kwargs=dict(
                 training_batch_size=training_batch_size,
                 validation_fraction=validation_fraction,
                 stop_after_epochs=stop_after_epochs,
-                ),
+            ),
             seed=seed,
-        ), 
+        ),
         fh,
     )

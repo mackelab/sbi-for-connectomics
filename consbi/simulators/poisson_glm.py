@@ -32,7 +32,8 @@ def poisson_glm(parameters, upper_rate_bound: int = 100_000):
     data = pyro.sample("data", pdist.Poisson(rate=rate.clamp(0, upper_rate_bound)))
     return data
 
-def two_param_poisson_glm(parameters, upper_rate_bound: int = 100_000, offset = 2):
+
+def two_param_poisson_glm(parameters, upper_rate_bound: int = 100_000, offset=2):
 
     assert parameters.ndim == 2
     assert parameters.shape[1] == 2
@@ -46,6 +47,7 @@ def two_param_poisson_glm(parameters, upper_rate_bound: int = 100_000, offset = 
     data = pyro.sample("data", pdist.Poisson(rate=rate.clamp(0, upper_rate_bound)))
 
     return data
+
 
 def two_param_poisson_glm_denom(parameters, upper_rate_bound: int = 100_000):
 

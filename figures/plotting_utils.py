@@ -49,7 +49,9 @@ def custom_marginal_plot(
         axi.spines["left"].set_visible(False)
         plt.yticks([])
         if points is not None:
-            plt.axvline(x=points[0, idx], color="k", label=points_label, ls=points_line_style)
+            plt.axvline(
+                x=points[0, idx], color="k", label=points_label, ls=points_line_style
+            )
 
         plt.xlim([0, 1])
         plt.xticks([0, 1])

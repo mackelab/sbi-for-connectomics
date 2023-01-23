@@ -1,7 +1,6 @@
 import json
 import os
 import random
-
 from functools import cmp_to_key
 from typing import Callable
 
@@ -256,7 +255,6 @@ def seed_all_backends(seed: int = None) -> None:
 
 
 def get_batch_simulator(simulator) -> Callable:
-
     def batch_simulator(theta):
         """Return a batch of simulations by looping over a batch of parameters."""
         assert theta.ndim > 1, "Theta must have a batch dimension."
