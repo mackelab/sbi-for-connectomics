@@ -33,8 +33,8 @@ verbose = True
 
 xo = np.array([[0.4300, 0.4300, 0.4200, 0.6400, 0.1700, 0.4400, 0.0900]])
 
-rule = default_rule
-num_dim = 3
+rule = default_rule_constrained_two_param
+num_dim = 2
 batch_size = 100
 
 ## Set up simulator
@@ -58,7 +58,8 @@ filenames = [
     # "/presimulated_dso_linear_constrained_two_param_uniform_n100000.p",
     # "/presimulated_dso_gaussian_05_n500000.p",
     # "/presimulated_dso_constrained_2p_gaussian_05_n500000.p"
-    "/presimulated_dso_uniform0-3_n500000.p",
+    # "/presimulated_dso_uniform0-3_n500000.p",
+    "/presimulated_dso_constrained_2p_uniform0-3_n500000.p",
     # "/presimulated_dso_linear_constrained_2p_uniform1_n500000.p",
     # "/presimulated_dso_constrained_2p_uniform0.2-0.4_n100000.p",
     # "/presimulated_dso_constrained_2p_uniform0.6_n500000.p",

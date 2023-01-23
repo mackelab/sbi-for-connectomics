@@ -1,14 +1,13 @@
-## Script for simulating data according to the distance based rule at the neuron level. 
+## Script for simulating data according to the distance based rule at the synapse level. 
 # See main paper and tutorials/1_simulation for details.
 
 import pickle
 from pathlib import Path
 
 import torch
-from sbi.inference import simulate_for_sbi
-from sbi.utils import BoxUniform
+from sbi.inference import prepare_for_sbi, simulate_for_sbi
 
-from consbi.simulators import DistanceRuleSimulator
+from consbi.simulators import RuleSimulator, peters_rule_subcellular
 
 # set parameters
 BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
@@ -19,7 +18,7 @@ save_folder = BASE_DIR + "/data"
 
 # set number of neuron pairs sampled from the connectome to mimick experimental settings, e.g., 50
 num_subsampling_pairs = 50
-cube_size = 50
+cube_size = 1
 num_simulations = 10
 num_workers = 5
 save_data = False
@@ -29,21 +28,19 @@ save_data = False
 #     "set-6"  # Set 6 holds the common cubes for different cube sizes. i x j entries, used for the neuron-level rule.
 #     "set-5"  # Set 5 holds common cubes, min distance and axon-dendrite product for cube size 50mu-m
 
-prior = BoxUniform(torch.zeros(1), torch.ones(1) * 100)
-model = DistanceRuleSimulator(
-    path_to_model=path_to_cellular_features,
-    feature_set_name="set-6",
-    num_subsampling_pairs=num_subsampling_pairs,
-    cube_size=cube_size,
+# for the synapse level rule we use a Beta prior because the parameter is a Bernoulli probability.
+prior = torch.distributions.Beta(
+    concentration1=torch.ones(1) * 0.5, concentration0=torch.ones(1) * 0.5
 )
 
-
-def batch_simulator(theta):
-    return model.rule(
-        theta,
-        feature=model.common_cubes,  #  Corresponds to feature set 6.
-        connection_fun=model.cutoff_rule,  # cutoff rule forms a connection when feature crosses a threshold.
-    )
+simulator = RuleSimulator(
+    path_to_subcellular_features,
+    peters_rule_subcellular,
+    verbose=False,
+    num_subsampling_pairs=num_subsampling_pairs,
+    experiment_name="peters-subcellular",
+)
+batch_simulator, prior = prepare_for_sbi(simulator, prior)
 
 
 theta, x = simulate_for_sbi(
@@ -52,6 +49,6 @@ theta, x = simulate_for_sbi(
 
 if save_data:
     with open(
-        save_folder + f"/presimulated_distance_rule_neuron_level_n{num_simulations}.p", "wb"
+        save_folder + f"/presimulated_distance_rule_synapse_level_n{num_simulations}.p", "wb"
     ) as fh:
         pickle.dump(dict(prior=prior, theta=theta, x=x), fh)
