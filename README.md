@@ -14,11 +14,17 @@ The repository for running SBI including detailed tutorials is located at https:
 
 Please reach out and create an issue if you have any questions or encounter problems with using this repository.
 
-## Getting started
-Google colab: You can play around with the [`tutorials`](tutorials/) in the browser using the following google colab link: 
+## Usage
+<!-- Google colab: You can play around with the [`tutorials`](tutorials/) in the browser using the following google colab link:  -->
+Tutorials for the SBI workflow and code for reproducing the figures are available as Jupyter Notebooks that can be opened in the browser (without executing them). 
 
-
-Locally: clone the repository, `cd` into the local `sbi-for-connectomics` folder and run `pip install -e .`
+To run and play around with the code, you need to clone and install this repository locally, e.g., in the command line, run: 
+```shell
+git clone https://github.com/mackelab/sbi-for-connectomics.git
+cd sbi-for-connectomics
+pip install -e .
+```
+If you then start an `jupyter notebook` server locally you should be able to open and execute all notebooks. 
 
 ## Binary files are provided via `git-lfs`
 
