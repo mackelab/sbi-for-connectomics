@@ -3,7 +3,7 @@
 
 # Simulation-based inference for computational connectomics
 
-This repository contains research code and figures of the "SBI for connectomics" paper (link to paper).
+This repository contains research code and figures of the paper [Simulation-based inference for efficient identification of generative models in connectomics](https://www.biorxiv.org/content/10.1101/2023.01.31.526269v1).
 In the paper, we show how to use [simulation-based inference (SBI)](http://simulation-based-inference.org) to infer parameters of computational models used in connectomics. 
 
 The repository is based on a small python package called [`consbi`](consbi/) that allows to simulate different wiring rules in the structural model of the rat barrel cortex. 
