@@ -11,6 +11,9 @@ DATA_PATH = BASE_PATH.joinpath("data")
 RESULTS_PATH = BASE_PATH.joinpath("results")
 
 # Add fonts
-fontManager.addfont(BASE_PATH / ".fonts/arial.ttf")
+fontManager.addfont(BASE_PATH.joinpath(".fonts/arial.ttf").as_posix())
 matplotlib.rc("font", **{"family": "sans-serif", "sans-serif": "Arial"})
+fontManager.addfont(BASE_PATH.joinpath(".fonts/arial_bold.ttf").as_posix())
+matplotlib.rc("font", **{"family": "sans-serif", "sans-serif": "Arial-bold"})
+
 del matplotlib
