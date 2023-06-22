@@ -13,12 +13,14 @@ REQUIRED = [
     "scipy",
     "torch>=1.5.1",
     "pyro-ppl>=1.3.1",
+    "sbibm @ git+https://github.com/mackelab/sbibm@connectomics-task#egg=sbibm",
     "tqdm",
+    "sbi>=0.18.0",
     "scikit-learn",
     "pandas",
-    "sbibm @ git+https://github.com/mackelab/sbibm@connectomics-task#egg=sbibm",
     "svgutils==0.3.1",
     "invoke",
+    "jupyterlab",
 ]
 
 EXTRAS = {
@@ -42,7 +44,9 @@ setup(
     author=AUTHOR,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
+    packages=find_packages(
+        exclude=["tests", "*.tests", "*.tests.*", "tests.*"]
+    ),
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,
