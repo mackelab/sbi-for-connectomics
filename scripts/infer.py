@@ -24,7 +24,7 @@ verbose = True
 # collect and concatenate training data
 filenames = [
     # "/presimulated_dso_constrained_2p_uniform0.6_n500000.p",
-    "/presimulated_dso_gaussian003_n1000000.p",
+    "/presimulated_dso_gaussian005_n1000000.p",
 ]
 
 # in case we have multiple files we concatenate the data and parameters.
@@ -43,7 +43,7 @@ theta = torch.cat(theta)
 save_name = f"/npe_{filenames[0][filenames[0].index('_'):]}"
 
 # hyper parameters
-training_batch_size = 1000
+training_batch_size = 500
 validation_fraction = 0.1
 stop_after_epochs = 20
 de = "nsf"
@@ -71,7 +71,7 @@ simulator = RuleSimulator(
     default_rule,
     verbose=verbose,
     num_subsampling_pairs=50,
-    prelocate_postall_offset=True,
+    prelocate_postall_offset=True,  # only for two-param variants.
 )
 batch_simulator = get_batch_simulator(simulator)
 
